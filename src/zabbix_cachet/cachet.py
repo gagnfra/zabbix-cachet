@@ -294,7 +294,23 @@ class Cachet:
             incident_id=data['data']['id'],
             component_id=params['component_id']))
         return data['data']
-
+    
+    # todo : add method to post an update to an incident
+    
+    def new_update_incident(self, id, **kwargs):
+        """
+        Create a new incident update
+        @param id: string
+        @param kwargs: various additional values =)
+                message, status
+        @return: dict of data
+        """
+        url = 'incidents/' + str(id) + '/updates'
+        params = kwargs
+        data = self._http_post(url, params)
+        logging.info(f"Incident ID {id} was updated. Status - {data['data']['human_status']}")
+        return data
+    
     def upd_incident(self, id, **kwargs):
         """
         Update incident

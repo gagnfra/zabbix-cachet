@@ -81,15 +81,16 @@ def triggers_watcher(service_map: List[ZabbixCachetMap]) -> bool:
                 if str(last_inc['id']) != '0':
                     if resolving_tmpl:
                         inc_msg = resolving_tmpl.format(
-                            time=datetime.datetime.now(tz=tz).strftime('%b %d, %H:%M'),
-                        ) + cachet.get_incident(i.cachet_component_id)['message']
+                            time=datetime.datetime.now(tz=tz).strftime('%d-%m %H:%M'),
+                        ) # + cachet.get_incident(i.cachet_component_id)['message']
                     else:
-                        inc_msg = cachet.get_incident(i.cachet_component_id)['message']
-                    cachet.upd_incident(last_inc['id'],
-                                        status=4,
-                                        component_id=i.cachet_component_id,
-                                        component_status=1,
-                                        message=inc_msg)
+                    cachet.new_update_incidents(last_inc['id'], message=inc_msg, status=4)
+                        #inc_msg = cachet.get_incident(i.cachet_component_id)['message']
+                    #cachet.upd_incident(last_inc['id'],
+                                        #status=4,
+                                        #component_id=i.cachet_component_id,
+                                        #component_status=1,
+                                        #message=inc_msg)
                 # Incident does not exist. Just change component status
                 else:
                     cachet.upd_components(i.cachet_component_id, status=1)
@@ -127,7 +128,7 @@ def triggers_watcher(service_map: List[ZabbixCachetMap]) -> bool:
                     #       Move format to config file
                     author = msg.get('name', '') + ' ' + msg.get('surname', '')
                     ack_time = datetime.datetime.fromtimestamp(int(msg['clock']), tz=tz).strftime(
-                        '%b %d, %H:%M')
+                        '%d-%m %H:%M')
                     ack_msg = acknowledgement_tmpl.format(
                         message=msg['message'],
                         ack_time=ack_time,
@@ -150,7 +151,7 @@ def triggers_watcher(service_map: List[ZabbixCachetMap]) -> bool:
                 if zbx_event:
                     zbx_event_clock = int(zbx_event.get('clock'))
                     zbx_event_time = datetime.datetime.fromtimestamp(zbx_event_clock, tz=tz).strftime(
-                        '%b %d, %H:%M')
+                        '%d-%m %H:%M')
                 else:
                     zbx_event_time = ''
                 inc_msg = investigating_tmpl.format(
@@ -169,6 +170,8 @@ def triggers_watcher(service_map: List[ZabbixCachetMap]) -> bool:
             if i.cachet_group_name:
                 inc_name = i.cachet_group_name + ' | ' + inc_name
 
+            #C'est ici que l'on envoye et modifie les incidents. Il faut modifier pour créer et modifier une mise a jour de l'incident
+            
             last_inc = cachet.get_incident(i.cachet_component_id)
             # Incident not registered
             if last_inc['status'] in ('-1', '4'):
@@ -177,10 +180,12 @@ def triggers_watcher(service_map: List[ZabbixCachetMap]) -> bool:
 
             # Incident already registered
             elif last_inc['status'] not in ('-1', '4'):
+                
+                cachet.new_update_incidents(last_inc['id'], message=inc_msg, status=inc_status)
                 # Only incident message can change. So check if this have happened
-                if last_inc['message'].strip() != inc_msg.strip():
-                    cachet.upd_incident(last_inc['id'], message=inc_msg, status=inc_status,
-                                        component_status=comp_status)
+                #if last_inc['message'].strip() != inc_msg.strip():
+                    #cachet.upd_incident(last_inc['id'], message=inc_msg, status=inc_status,
+                                        #component_status=comp_status)
     return True
 
 
